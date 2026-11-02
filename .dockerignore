@@ -1,0 +1,25 @@
+.git
+.gitignore
+.venv
+__pycache__
+*.py[cod]
+.pytest_cache
+.mypy_cache
+.ruff_cache
+
+# runtime output / secrets / inputs
+tmp_build
+tmp_local_sink
+.cache
+.env
+books
+*.pdf
+
+# not needed in the image
+tests
+site
+dist
+build
+*.egg-info
+Dockerfile
+docker-compose.yml

@@ -1,0 +1,15 @@
+services:
+  pdf2study:
+    build: .
+    image: pdf2study:latest
+    init: true            # reap Chromium child processes
+    env_file:
+      - ./pdf2study/.env
+    working_dir: /work
+    volumes:
+      - ./:/work
+      # For `publish`, mount your MkDocs site clone (uncomment + adjust):
+      # - ~/Documents/Github/cert_study_notes:/site
+    # For local Ollama on the host (provider=ollama):
+    # extra_hosts:
+    #   - "host.docker.internal:host-gateway"

@@ -37,6 +37,43 @@ interpreter so wheels resolve correctly:
 uv sync --extra dev --python /opt/homebrew/bin/python3.12
 ```
 
+## Docker (standalone Linux container)
+
+The image bundles Python 3.12, Node.js + Marp CLI, Chromium (PDF rendering), fonts,
+and the OCR toolchain — nothing needs to be installed on the host.
+
+```bash
+docker build -t pdf2study .
+
+# generate + upload (mount the project so books/ and tmp dirs are visible)
+docker run --rm -v "$PWD:/work" --env-file pdf2study/.env pdf2study \
+  process books/mybook.pdf --book-slug mybook --sink r2
+
+# deterministic only / local sink
+docker run --rm -v "$PWD:/work" --env-file pdf2study/.env pdf2study \
+  process books/mybook.pdf --book-slug mybook --dry-run
+
+# publish markdown to a MkDocs site clone
+docker run --rm -v "$PWD:/work" \
+  -v "$HOME/Documents/Github/cert_study_notes:/site" \
+  --env-file pdf2study/.env pdf2study \
+  publish --book-slug mybook --site-repo /site --dest books/mybook \
+          --base-branch dev --source r2
+
+# docker compose
+docker compose run --rm pdf2study process books/mybook.pdf --book-slug mybook --sink r2
+```
+
+Notes:
+- Chromium runs with `CHROME_NO_SANDBOX=1` (set in the image) so PDF export works in a container.
+- The image runs as non-root **uid 1000**. On Linux bind mounts, if you hit permission
+  errors, add `--user "$(id -u):$(id -g)"`.
+- **Local Ollama** from inside the container:
+  `--add-host=host.docker.internal:host-gateway -e OLLAMA_HOST=http://host.docker.internal:11434 --provider ollama`
+- **Publishing over SSH** needs your key/agent mounted
+  (`-v "$SSH_AUTH_SOCK:/ssh-agent" -e SSH_AUTH_SOCK=/ssh-agent`), or use HTTPS + `GITHUB_TOKEN`.
+- Multi-arch: `docker buildx build --platform linux/amd64 -t pdf2study .` (and `linux/arm64`).
+
 ## Usage
 
 ```bash

@@ -18,6 +18,9 @@ dependencies = [
 dev = [
     "pytest>=8.0.0",
 ]
+ocr = [
+    "ocrmypdf>=16.0.0",
+]
 
 [project.scripts]
 pdf2study = "pdf2study.cli:main"

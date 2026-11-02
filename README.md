@@ -12,3 +12,11 @@ private Cloudflare R2 bucket.
 uv sync --extra dev --python /opt/homebrew/bin/python3.12
 uv run pdf2study process books/your-book.pdf --book-slug your-book --dry-run
 ```
+
+Or run it standalone in Docker (bundles Python, Node/Marp, Chromium, OCR):
+
+```bash
+docker build -t pdf2study .
+docker run --rm -v "$PWD:/work" --env-file pdf2study/.env pdf2study \
+  process books/your-book.pdf --book-slug your-book --sink r2
+```
