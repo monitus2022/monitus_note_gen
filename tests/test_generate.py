@@ -18,10 +18,15 @@ class FakeClient:
 
     def __init__(self):
         self.calls = 0
+        self.caption_calls = 0
 
     def chat(self, system, user, **kw):
         self.calls += 1
         return SLIDES if "Marp" in system else QNA
+
+    def caption_image(self, path, hint=None):
+        self.caption_calls += 1
+        return "A red rectangle diagram."
 
 
 def _chunks():
@@ -52,3 +57,19 @@ def test_generate_chapters_groups_renders_and_dedupes(tmp_path):
     assert "### Question 1:" in chapters[0].qna_md
     assert '??? tip "Reveal Answer & Explanation"' in chapters[0].qna_md
     assert chapters[0].qna_md.count("Correct Answer") == 1
+
+
+def test_caption_figures_only_uncaptioned(tmp_path):
+    from pdf2study.generate import caption_figures
+    from pdf2study.models import Figure
+
+    img = tmp_path / "f.png"
+    img.write_bytes(b"not-a-real-image-but-has-size")
+    tagged = Figure("f1", 1, (0, 0, 1, 1), caption="Figure 1: given", image_path=str(img))
+    untagged = Figure("f2", 1, (0, 0, 1, 1), caption=None, image_path=str(img))
+
+    client = FakeClient()
+    caption_figures(client, ContentCache(tmp_path / "c"), [tagged, untagged])
+    assert tagged.alt is None  # already had a caption
+    assert untagged.alt == "A red rectangle diagram."
+    assert client.caption_calls == 1

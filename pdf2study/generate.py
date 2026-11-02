@@ -9,10 +9,28 @@ from .cache import ContentCache, hash_key
 from .chunker import Chunk
 from .llm.client import OllamaClient
 from .logging_setup import get_logger
+from .models import Figure
 from .prompts import PROMPT_VERSION, qna_fragment_prompt, slide_fragment_prompt
 from .validate import dedupe_items, normalize_slides, parse_qna_raw, render_qna, strip_wrappers
 
 log = get_logger("generate")
+
+
+def caption_figures(client, cache: ContentCache, figures: list[Figure]) -> None:
+    """Fill `Figure.alt` for uncaptioned figures via the (multimodal) model."""
+    for fig in figures:
+        if fig.caption or not fig.image_path:
+            continue
+        try:
+            size = Path(fig.image_path).stat().st_size
+        except OSError:
+            continue
+        key = hash_key(fig.id, size, client.model, PROMPT_VERSION, "caption")
+
+        def produce(path=fig.image_path, hint=fig.caption) -> str:
+            return client.caption_image(path, hint).strip()
+
+        fig.alt = cache.cached_text("caption", key, produce)
 
 
 @dataclass

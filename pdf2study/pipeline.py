@@ -18,11 +18,12 @@ from .cache import ContentCache, hash_key
 from .chunker import HierarchicalChunker
 from .config import Config
 from .figures import attach_figures_to_sections, collect_figures
-from .generate import generate_chapters, write_artifacts
+from .generate import caption_figures, generate_chapters, write_artifacts
 from .llm.client import OllamaClient
 from .logging_setup import get_logger
 from .manifest import build_manifest
 from .models import ParsedDocument, Section
+from .ocr import maybe_ocr
 from .parser import PyMuPDFParser
 from .render import render_pdf, render_pptx
 from .storage import LocalSink, R2StorageManager, sync_directory
@@ -120,9 +121,10 @@ def run(cfg: Config, pdf_path: str | Path, slug: str, client=None) -> dict:
 
     cache = ContentCache(Path(cfg.cache_dir) / slug, enabled=not cfg.no_cache)
 
-    doc = fitz.open(pdf_path)
+    effective_pdf = maybe_ocr(cfg, pdf_path, book_tmp)
+    doc = fitz.open(effective_pdf)
     try:
-        parsed = _parse(cfg, doc, pdf_path, cache)
+        parsed = _parse(cfg, doc, effective_pdf, cache)
         limit_page: int | None = None
         if cfg.limit:
             parsed.sections, limit_page = _limit_sections(parsed.sections, cfg.limit)
@@ -130,6 +132,10 @@ def run(cfg: Config, pdf_path: str | Path, slug: str, client=None) -> dict:
         figures = collect_figures(doc, images_dir, dpi=cfg.dpi, slug="fig", pages=pages)
     finally:
         doc.close()
+
+    if cfg.caption_vlm and not cfg.dry_run:
+        client = client or OllamaClient(cfg.ollama_host, cfg.model)
+        caption_figures(client, cache, figures)
 
     attach_figures_to_sections(parsed.sections, figures)
 

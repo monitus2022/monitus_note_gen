@@ -10,9 +10,15 @@ See [`PLAN.MD`](../PLAN.MD) for the full architecture.
 | Milestone | State |
 |---|---|
 | M1 — deterministic core (parse, figures, chunk, manifest, cache, CLI `--dry-run`) | ✅ done |
-| M2 — Ollama generation, map/reduce, Marp PDF + python-pptx render, validation | 🔬 implemented, validating on a real book |
-| M3 — live R2 upload + manifest | ⏳ |
-| M4 — OCR fallback, VLM captions, Docling backend | ⏳ |
+| M2 — Ollama generation, map/reduce, Marp PDF + python-pptx render, validation | ✅ done (smoke-tested) |
+| M3 — live R2 upload + manifest | ⏳ blocked: bucket `pdf-study-storage` must be created |
+| M4 — OCR fallback, VLM captions; Docling backend | 🔬 OCR + VLM captions done, Docling deferred |
+
+- **OCR** (`ocr.py`): detects image-only pages and runs `ocrmypdf` when present
+  (`--ocr auto|always|never`); warns and continues if it isn't installed.
+- **VLM captions** (`--caption-vlm`): uncaptioned figures get one-sentence
+  descriptions from the multimodal `qwen3.5` model (cached).
+- **Docling backend**: not implemented (heavy dependency; not installed). `--parser pymupdf` only.
 
 ### Generation model
 
