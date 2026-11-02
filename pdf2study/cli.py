@@ -115,6 +115,7 @@ def process(
 @click.option("--base-branch", default="dev", show_default=True, help="Branch the PR targets")
 @click.option("--source", type=click.Choice(["auto", "local", "r2"]), default="auto", show_default=True)
 @click.option("--image-base-url", default=None, help="Rewrite figures to <url>/books/<slug>/images/... (else dropped)")
+@click.option("--title", default=None, help="Override the book title shown on the index page")
 @click.option("--no-push", is_flag=True, default=False, help="Commit locally but do not push")
 @click.option("--tmp-dir", type=click.Path(path_type=Path), default=Path("tmp_build"), show_default=True)
 @click.option("--verbose", is_flag=True, default=False)
@@ -125,6 +126,7 @@ def publish(
     base_branch: str,
     source: str,
     image_base_url: str | None,
+    title: str | None,
     no_push: bool,
     tmp_dir: Path,
     verbose: bool,
@@ -140,6 +142,7 @@ def publish(
         base_branch=base_branch,
         source=source,
         image_base_url=image_base_url,
+        title=title,
         push=not no_push,
         github_token=os.getenv("GITHUB_TOKEN"),
     )

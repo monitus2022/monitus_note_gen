@@ -180,6 +180,7 @@ def publish(
     base_branch: str = "dev",
     source: str = "auto",
     image_base_url: str | None = None,
+    title: str | None = None,
     push: bool = True,
     github_token: str | None = None,
     commit_message: str | None = None,
@@ -193,6 +194,8 @@ def publish(
         raise RuntimeError("site repo has uncommitted changes; commit or stash them first")
 
     manifest, slides, qna = load_source(cfg, slug, source)
+    if title:
+        manifest = {**manifest, "title": title}
     image_base_url = image_base_url or cfg.image_base_url
     pages = build_pages(manifest, slides, qna, slug, image_base_url=image_base_url)
 
