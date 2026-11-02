@@ -1,0 +1,12 @@
+{
+  "chunk_id": "chunk_0006",
+  "order": 6,
+  "book": "ai-engineering",
+  "chapter": "Preface",
+  "section": "Conventions Used in This Book",
+  "level": 2,
+  "page": 23,
+  "text": "# Conventions Used in This Book \n\nThe following typographical conventions are used in this book: \n\n_Italic_ \n\nIndicates new terms, URLs, email addresses, filenames, and file extensions. \n\n#### _`Constant width`_ \n\nUsed for program listings, as well as within paragraphs to refer to program elements such as variable or function names, databases, data types, environment variables, statements, input prompts into models, and keywords. \n\n#### **`Constant width bold`** \n\nShows commands or other text that should be typed literally by the user. \n\n#### _`Constant width italic`_ \n\nShows text that should be replaced with user-supplied values or by values determined by context.",
+  "tokens": 141,
+  "figures": []
+}

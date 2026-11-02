@@ -1,0 +1,12 @@
+{
+  "chunk_id": "chunk_0007",
+  "order": 7,
+  "book": "ai-engineering",
+  "chapter": "Preface",
+  "section": "Using Code Examples",
+  "level": 2,
+  "page": 24,
+  "text": "###### **TIP** \n\nThis element signifies a tip or suggestion. \n\n###### **NOTE** \n\nThis element signifies a general note. \n\n###### **WARNING** \n\nThis element indicates a warning or caution. \n\n# Using Code Examples \n\nSupplemental material (code examples, exercises, etc.) is available for download at _<u>https://github.com/chiphuyen/aie-book</u>_ <u>. The repository</u> contains additional resources about AI engineering, including important papers and helpful tools. It also covers topics that are too deep to go into in this book. For those interested in the process of writing this book, the GitHub repository also contains behind-the-scenes information and statistics about the book. \n\nIf you have a technical question or a problem using the code examples, please send email to _<u>support@oreilly.com</u>_ <u>.</u>",
+  "tokens": 180,
+  "figures": []
+}

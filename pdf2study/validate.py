@@ -147,8 +147,9 @@ def _parse_block(block: str) -> QnAItem | None:
             why.append(s)
     if len(options) < 4 or not answer:
         return None
+    question = re.sub(r"(?i)^\s*Q\s*[:\)]\s*", "", question.strip()).strip()
     return QnAItem(
-        question=question.strip(),
+        question=question,
         options=[options.get(k, "") for k in "ABCD"],
         answer=answer,
         why=" ".join(w for w in why if w).strip(),

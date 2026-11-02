@@ -1,0 +1,12 @@
+{
+  "chunk_id": "chunk_0003",
+  "order": 3,
+  "book": "ai-engineering",
+  "chapter": "Preface",
+  "section": "What This Book Is Not",
+  "level": 2,
+  "page": 15,
+  "text": "better models. If a problem is fundamental, I’ll analyze its challenges and solutions to address each challenge. I’m a fan of the start-simple approach, so for many problems, I’ll start from the simplest solution and then progress with more complex solutions to address rising challenges. \n\nSecond, I consulted an extensive network of researchers and engineers, who are smarter than I am, about what they think are the most important problems and solutions. \n\nOccasionally, I also relied on <u>Lindy’s Law, which infers that the future life</u> expectancy of a technology is proportional to its current age. So if something has been around for a while, I assume that it’ll continue existing for a while longer. \n\nIn this book, however, I occasionally included a concept that I believe to be temporary because it’s immediately useful for some application developers or because it illustrates an interesting problem-solving approach. \n\n\n\n# What This Book Is Not \n\nThis book isn’t a tutorial. While it mentions specific tools and includes pseudocode snippets to illustrate certain concepts, it doesn’t teach you how to use a tool. Instead, it offers a framework for selecting tools. It includes many discussions on the trade-offs between different solutions and the questions you should ask when evaluating a solution. When you want to use a tool, it’s usually easy to find tutorials for it online. AI chatbots are also pretty good at helping you get started with popular tools. \n\nThis book isn’t an ML theory book. It doesn’t explain what a neural network is or how to build and train a model from scratch. While it explains many theoretical concepts immediately relevant to the discussion, the book is a practical book that focuses on helping you build successful AI applications to solve real-world problems. \n\nWhile it’s possible to build foundation model-based applications without ML expertise, a basic understanding of ML and statistics can help you build better applications and save you from unnecessary suffering. You can read this book without any prior ML background. However, you will be more effective while building AI applications if you know the following concepts: \n\nProbabilistic concepts such as sampling, determinism, and distribution.",
+  "tokens": 432,
+  "figures": []
+}
