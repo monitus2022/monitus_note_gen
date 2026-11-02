@@ -166,7 +166,7 @@ def run(cfg: Config, pdf_path: str | Path, slug: str, client=None) -> dict:
 
     if cfg.generate:
         client = client or build_client(cfg)
-        chapters = generate_chapters(client, cache, chunks)
+        chapters = generate_chapters(client, cache, chunks, concurrency=cfg.concurrency)
         write_artifacts(book_tmp, chapters)
         summary["chapters_generated"] = len(chapters)
         if cfg.render:
