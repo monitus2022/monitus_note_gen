@@ -19,7 +19,7 @@ from .chunker import HierarchicalChunker
 from .config import Config
 from .figures import attach_figures_to_sections, collect_figures
 from .generate import caption_figures, generate_chapters, write_artifacts
-from .llm.client import OllamaClient
+from .llm import build_client
 from .logging_setup import get_logger
 from .manifest import build_manifest
 from .models import ParsedDocument, Section
@@ -134,7 +134,7 @@ def run(cfg: Config, pdf_path: str | Path, slug: str, client=None) -> dict:
         doc.close()
 
     if cfg.caption_vlm and not cfg.dry_run:
-        client = client or OllamaClient(cfg.ollama_host, cfg.model)
+        client = client or build_client(cfg)
         caption_figures(client, cache, figures)
 
     attach_figures_to_sections(parsed.sections, figures)
@@ -165,8 +165,8 @@ def run(cfg: Config, pdf_path: str | Path, slug: str, client=None) -> dict:
         return summary
 
     if cfg.generate:
-        client = client or OllamaClient(cfg.ollama_host, cfg.model)
-        chapters = generate_chapters(client, cache, chunks)
+        client = client or build_client(cfg)
+        chapters = generate_chapters(client, cache, chunks, concurrency=cfg.concurrency)
         write_artifacts(book_tmp, chapters)
         summary["chapters_generated"] = len(chapters)
         if cfg.render:

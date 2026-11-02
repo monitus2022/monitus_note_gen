@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
+from concurrent.futures import ThreadPoolExecutor
 
 from .cache import ContentCache, hash_key
 from .chunker import Chunk
@@ -41,13 +42,6 @@ class ChapterArtifacts:
     qna_md: str
 
 
-def _group(chunks: list[Chunk]) -> dict[str, list[Chunk]]:
-    grouped: dict[str, list[Chunk]] = {}
-    for ch in chunks:
-        grouped.setdefault(ch.chapter, []).append(ch)
-    return grouped
-
-
 def map_chunk(client: OllamaClient, cache: ContentCache, chunk: Chunk) -> tuple[str, str]:
     """Generate (slide_fragment, raw_qna) for one chunk, cached by content.
 
@@ -70,17 +64,25 @@ def map_chunk(client: OllamaClient, cache: ContentCache, chunk: Chunk) -> tuple[
 
 
 def generate_chapters(
-    client: OllamaClient, cache: ContentCache, chunks: list[Chunk]
+    client: OllamaClient, cache: ContentCache, chunks: list[Chunk], concurrency: int = 1
 ) -> list[ChapterArtifacts]:
+    # Map phase (optionally parallel — cloud latency is the bottleneck).
+    if concurrency > 1:
+        with ThreadPoolExecutor(max_workers=concurrency) as pool:
+            results = list(pool.map(lambda c: map_chunk(client, cache, c), chunks))
+    else:
+        results = [map_chunk(client, cache, c) for c in chunks]
+
+    grouped: dict[str, list[tuple[Chunk, str, str]]] = {}
+    for chunk, (slides, raw) in zip(chunks, results):
+        grouped.setdefault(chunk.chapter, []).append((chunk, slides, raw))
+
     out: list[ChapterArtifacts] = []
-    for index, (title, chapter_chunks) in enumerate(_group(chunks).items(), start=1):
-        slide_parts: list[str] = []
+    for index, (title, entries) in enumerate(grouped.items(), start=1):
+        slide_parts = [s.strip() for _, s, _ in entries if s.strip()]
         qna_items = []
-        for chunk in chapter_chunks:
-            slides, qna_raw = map_chunk(client, cache, chunk)
-            if slides.strip():
-                slide_parts.append(slides.strip())
-            qna_items.extend(parse_qna_raw(qna_raw))
+        for chunk, _, raw in entries:
+            qna_items.extend(parse_qna_raw(raw))
             log.info("generated %s (chapter %d)", chunk.chunk_id, index)
         slides_md = f"# {title}\n\n---\n\n" + "\n\n---\n\n".join(slide_parts) + "\n"
         qna_md = render_qna(dedupe_items(qna_items))

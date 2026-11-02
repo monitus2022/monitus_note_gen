@@ -12,6 +12,7 @@ from .logging_setup import setup_logging
 from .pipeline import run
 
 MODEL_PRESETS = {"smoke": "qwen3.5:4b", "production": "qwen3.5:9b"}
+DEFAULT_OPENROUTER_MODEL = "deepseek/deepseek-v4.1-flash-1017"
 
 
 @click.group()
@@ -23,13 +24,18 @@ def main() -> None:
 @main.command()
 @click.argument("pdf", type=click.Path(exists=True, dir_okay=False, path_type=Path))
 @click.option("--book-slug", required=True, help="Stable identifier for this book, e.g. ai-engineering")
-@click.option("--model", default=None, help="Ollama model tag (overrides --model-preset)")
+@click.option(
+    "--provider",
+    type=click.Choice(["openrouter", "ollama"]),
+    default=None,
+    help="LLM backend (default: openrouter; use 'ollama' for local)",
+)
+@click.option("--model", default=None, help="Model tag (overrides --model-preset / provider default)")
 @click.option(
     "--model-preset",
     type=click.Choice(sorted(MODEL_PRESETS)),
-    default="smoke",
-    show_default=True,
-    help="Convenience alias for a model tier",
+    default=None,
+    help="Convenience alias for a local Ollama tier (ignored unless --provider ollama)",
 )
 @click.option("--parser", type=click.Choice(["pymupdf", "docling", "mineru"]), default="pymupdf", show_default=True)
 @click.option("--max-tokens", type=int, default=3500, show_default=True)
@@ -51,8 +57,9 @@ def main() -> None:
 def process(
     pdf: Path,
     book_slug: str,
+    provider: str | None,
     model: str | None,
-    model_preset: str,
+    model_preset: str | None,
     parser: str,
     max_tokens: int,
     concurrency: int,
@@ -73,8 +80,11 @@ def process(
 ) -> None:
     """Parse PDF, chunk it, write artifacts and (unless --dry-run) upload."""
     setup_logging(verbose)
+    if model is None and provider == "ollama":
+        model = MODEL_PRESETS.get(model_preset or "smoke")
     cfg = load_config(
-        model=model or MODEL_PRESETS.get(model_preset),
+        provider=provider,
+        model=model,
         parser=parser,
         max_tokens=max_tokens,
         concurrency=concurrency,

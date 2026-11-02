@@ -33,9 +33,12 @@ class Config:
     tmp_dir: Path = field(default_factory=lambda: Path("tmp_build"))
     cache_dir: Path = field(default_factory=lambda: Path(".cache"))
 
-    # ollama
+    # LLM provider
+    provider: str = "openrouter"  # openrouter | ollama
     ollama_host: str = "http://localhost:11434"
-    model: str = "qwen3.5:4b"
+    model: str = "deepseek/deepseek-v4.1-flash-1017"
+    openrouter_api_key: str | None = None
+    openrouter_base_url: str = "https://openrouter.ai/api/v1"
 
     # pipeline
     parser: str = "pymupdf"  # pymupdf | docling | mineru
@@ -67,9 +70,18 @@ def load_config(**overrides) -> Config:
         if candidate.exists():
             load_dotenv(candidate, override=False)
 
+    provider = overrides.get("provider") or os.getenv("PDF2STUDY_PROVIDER", "openrouter")
+    if provider == "ollama":
+        default_model = os.getenv("OLLAMA_MODEL", "qwen3.5:4b")
+    else:
+        default_model = os.getenv("OPENROUTER_MODEL", "deepseek/deepseek-v4.1-flash-1017")
+
     cfg = Config(
+        provider=provider,
+        model=overrides.get("model") or default_model,
         ollama_host=os.getenv("OLLAMA_HOST", "http://localhost:11434"),
-        model=os.getenv("OLLAMA_MODEL", "qwen3.5:4b"),
+        openrouter_api_key=os.getenv("OPENROUTER_API_KEY"),
+        openrouter_base_url=os.getenv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1"),
         r2=R2Config(
             access_key_id=os.getenv("R2_ACCESS_KEY_ID"),
             secret_access_key=os.getenv("R2_SECRET_ACCESS_KEY"),
