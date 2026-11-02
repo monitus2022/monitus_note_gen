@@ -43,20 +43,36 @@ uv sync --extra dev --python /opt/homebrew/bin/python3.12
 # Deterministic stages only (no LLM, no upload):
 uv run pdf2study process books/mybook.pdf --book-slug mybook --dry-run --keep-temp
 
-# Write artifacts then upload to a local sink mirroring the R2 layout:
+# Cloud generation (default provider) then upload to a local sink:
 uv run pdf2study process books/mybook.pdf --book-slug mybook --sink local
+
+# Local generation via Ollama (no cloud, no cost):
+uv run pdf2study process books/mybook.pdf --book-slug mybook \
+  --provider ollama --model-preset smoke
 
 # Live upload (requires R2 credentials in .env):
 cp pdf2study/.env.example .env   # fill in, then:
 uv run pdf2study process books/mybook.pdf --book-slug mybook --sink r2
 ```
 
+### Model provider
+
+| Provider | Default model | Notes |
+|---|---|---|
+| `openrouter` (default) | `deepseek/deepseek-v4.1-flash-1017` | cloud; needs `OPENROUTER_API_KEY` |
+| `ollama` | `qwen3.5:4b` (`smoke`) / `qwen3.5:9b` (`production`) | local, free, keeps data on-device |
+
+The full book is ~310 chunks / ~350k input + ~190k output tokens — roughly **$0.15–$1.00**
+on OpenRouter depending on model. Both providers implement the same client interface
+(`chat`, `caption_image`), so switching is a single flag.
+
 ### Key options
 
 | Flag | Meaning |
 |---|---|
-| `--model-preset smoke\|production` | `qwen3.5:4b` / `qwen3.5:9b` |
-| `--model` | explicit Ollama tag (overrides preset) |
+| `--provider openrouter\|ollama` | LLM backend (default openrouter) |
+| `--model-preset smoke\|production` | local Ollama tag (`qwen3.5:4b` / `:9b`) |
+| `--model` | explicit model tag (overrides preset / provider default) |
 | `--parser pymupdf\|docling\|mineru` | parsing backend (only `pymupdf` implemented) |
 | `--dry-run` | stop before generation/upload |
 | `--limit N` | only the first N chapters |
