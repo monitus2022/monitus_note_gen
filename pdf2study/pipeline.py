@@ -178,6 +178,15 @@ def run(cfg: Config, pdf_path: str | Path, slug: str, client=None) -> dict:
     summary["uploaded_to"] = f"{cfg.sink}:{prefix}"
     summary["sink"] = cfg.sink
 
+    if cfg.r2_public_bucket and images_dir.exists() and any(images_dir.iterdir()):
+        try:
+            pub = R2StorageManager(cfg.r2, bucket=cfg.r2_public_bucket)
+            public_prefix = f"books/{slug}/images"
+            sync_directory(pub, images_dir, public_prefix)
+            summary["public_images"] = f"r2:{cfg.r2_public_bucket}/{public_prefix}"
+        except Exception as exc:  # noqa: BLE001 - public hosting is optional
+            log.warning("public figure upload failed (continuing): %s", exc)
+
     if not cfg.keep_temp:
         shutil.rmtree(book_tmp, ignore_errors=True)
         log.info("cleaned %s", book_tmp)

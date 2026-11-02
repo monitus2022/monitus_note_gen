@@ -193,6 +193,7 @@ def publish(
         raise RuntimeError("site repo has uncommitted changes; commit or stash them first")
 
     manifest, slides, qna = load_source(cfg, slug, source)
+    image_base_url = image_base_url or cfg.image_base_url
     pages = build_pages(manifest, slides, qna, slug, image_base_url=image_base_url)
 
     _git(repo, "fetch", "origin", "--prune")

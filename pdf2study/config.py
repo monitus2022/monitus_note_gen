@@ -58,6 +58,10 @@ class Config:
     sink: str = "local"  # local | r2
     local_sink_dir: Path = field(default_factory=lambda: Path("tmp_local_sink"))
 
+    # optional public figure hosting (separate bucket/domain; figures only)
+    r2_public_bucket: str | None = None
+    image_base_url: str | None = None
+
     r2: R2Config = field(default_factory=R2Config)
 
     def book_tmp(self, slug: str) -> Path:
@@ -82,6 +86,8 @@ def load_config(**overrides) -> Config:
         ollama_host=os.getenv("OLLAMA_HOST", "http://localhost:11434"),
         openrouter_api_key=os.getenv("OPENROUTER_API_KEY"),
         openrouter_base_url=os.getenv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1"),
+        r2_public_bucket=os.getenv("R2_PUBLIC_BUCKET"),
+        image_base_url=os.getenv("IMAGE_BASE_URL"),
         r2=R2Config(
             access_key_id=os.getenv("R2_ACCESS_KEY_ID"),
             secret_access_key=os.getenv("R2_SECRET_ACCESS_KEY"),
