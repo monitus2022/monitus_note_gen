@@ -1,0 +1,15 @@
+# Minimal MkDocs config required for the generated Q&A pages.
+# The collapsible answer blocks use `??? tip "..."` (pymdownx.details).
+site_name: Study Notes
+docs_dir: .
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - attr_list
+  - pymdownx.tasklist:
+      custom_checkbox: true
+
+nav:
+  - Home: index.md
