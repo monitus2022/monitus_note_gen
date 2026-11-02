@@ -3,6 +3,7 @@
 
 # Build / temp output
 tmp_build/
+tmp_local_sink/
 .cache/
 dist/
 build/
