@@ -53,7 +53,25 @@ uv run pdf2study process books/mybook.pdf --book-slug mybook \
 # Live upload (requires R2 credentials in .env):
 cp pdf2study/.env.example .env   # fill in, then:
 uv run pdf2study process books/mybook.pdf --book-slug mybook --sink r2
+
+# Publish generated notes (markdown only) to a separate MkDocs site repo as a PR branch:
+uv run pdf2study publish --book-slug mybook \
+  --site-repo ~/Documents/Github/cert_study_notes \
+  --dest books/mybook --base-branch dev --source r2
 ```
+
+### Figures in the published site
+
+`publish` is markdown-only. To show figures, host them on a **separate public
+bucket** (never make the main bucket public — it holds raw chunks/book text):
+
+```env
+R2_PUBLIC_BUCKET=pdf-study-figures
+IMAGE_BASE_URL=https://figures.example.com   # public custom domain for that bucket
+```
+
+`process` then uploads figures to `books/<slug>/images/` in the public bucket, and
+`publish` rewrites image links to `<IMAGE_BASE_URL>/books/<slug>/images/...`.
 
 ### Model provider
 

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 
 import click
@@ -10,6 +11,7 @@ import click
 from .config import load_config
 from .logging_setup import setup_logging
 from .pipeline import run
+from .publish import publish as publish_notes
 
 MODEL_PRESETS = {"smoke": "qwen3.5:4b", "production": "qwen3.5:9b"}
 DEFAULT_OPENROUTER_MODEL = "deepseek/deepseek-v4.1-flash-1017"
@@ -104,3 +106,44 @@ def process(
     )
     summary = run(cfg, pdf, book_slug)
     click.echo(json.dumps(summary, indent=2))
+
+
+@main.command()
+@click.option("--book-slug", required=True)
+@click.option("--site-repo", required=True, type=click.Path(path_type=Path), help="Local clone of the MkDocs site repo")
+@click.option("--dest", required=True, help="Destination folder under the site's docs/, e.g. books/ai-engineering")
+@click.option("--base-branch", default="dev", show_default=True, help="Branch the PR targets")
+@click.option("--source", type=click.Choice(["auto", "local", "r2"]), default="auto", show_default=True)
+@click.option("--image-base-url", default=None, help="Rewrite figures to <url>/books/<slug>/images/... (else dropped)")
+@click.option("--title", default=None, help="Override the book title shown on the index page")
+@click.option("--no-push", is_flag=True, default=False, help="Commit locally but do not push")
+@click.option("--tmp-dir", type=click.Path(path_type=Path), default=Path("tmp_build"), show_default=True)
+@click.option("--verbose", is_flag=True, default=False)
+def publish(
+    book_slug: str,
+    site_repo: Path,
+    dest: str,
+    base_branch: str,
+    source: str,
+    image_base_url: str | None,
+    title: str | None,
+    no_push: bool,
+    tmp_dir: Path,
+    verbose: bool,
+) -> None:
+    """Publish generated notes as markdown into the MkDocs site repo (PR branch)."""
+    setup_logging(verbose)
+    cfg = load_config(tmp_dir=tmp_dir)
+    result = publish_notes(
+        cfg,
+        book_slug,
+        site_repo,
+        dest,
+        base_branch=base_branch,
+        source=source,
+        image_base_url=image_base_url,
+        title=title,
+        push=not no_push,
+        github_token=os.getenv("GITHUB_TOKEN"),
+    )
+    click.echo(json.dumps(result, indent=2))

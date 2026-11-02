@@ -14,7 +14,7 @@ log = get_logger("storage.r2")
 
 
 class R2StorageManager:
-    def __init__(self, config: R2Config):
+    def __init__(self, config: R2Config, bucket: str | None = None):
         if not config.is_complete():
             raise ValueError(
                 "R2 is not configured. Set R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY and "
@@ -22,7 +22,7 @@ class R2StorageManager:
             )
         import boto3  # imported lazily so local-sink runs don't need it wired up
 
-        self.bucket = config.bucket
+        self.bucket = bucket or config.bucket
         self._client = boto3.client(
             "s3",
             endpoint_url=config.endpoint_url,
