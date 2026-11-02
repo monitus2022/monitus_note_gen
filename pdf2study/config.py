@@ -48,6 +48,8 @@ class Config:
     dry_run: bool = False
     limit: int | None = None
     no_cache: bool = False
+    generate: bool = True
+    render: bool = True
 
     # destination
     sink: str = "local"  # local | r2
@@ -61,7 +63,9 @@ class Config:
 
 def load_config(**overrides) -> Config:
     """Load .env (if present) then apply overrides, ignoring None values."""
-    load_dotenv()  # no-op if .env missing
+    for candidate in (Path.cwd() / ".env", Path(__file__).resolve().parent / ".env"):
+        if candidate.exists():
+            load_dotenv(candidate, override=False)
 
     cfg = Config(
         ollama_host=os.getenv("OLLAMA_HOST", "http://localhost:11434"),

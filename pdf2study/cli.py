@@ -41,6 +41,8 @@ def main() -> None:
 @click.option("--dry-run", is_flag=True, default=False, help="Stop after deterministic stages (no upload)")
 @click.option("--limit", type=int, default=None, help="Process only the first N chapters")
 @click.option("--no-cache", is_flag=True, default=False, help="Disable the content-hash cache")
+@click.option("--generate/--no-generate", default=True, help="Run LLM generation (default on)")
+@click.option("--render/--no-render", default=True, help="Render PPTX/PDF decks")
 @click.option("--sink", type=click.Choice(["local", "r2"]), default="local", show_default=True)
 @click.option("--local-sink-dir", type=click.Path(path_type=Path), default=Path("tmp_local_sink"), show_default=True)
 @click.option("--tmp-dir", type=click.Path(path_type=Path), default=Path("tmp_build"), show_default=True)
@@ -61,6 +63,8 @@ def process(
     dry_run: bool,
     limit: int | None,
     no_cache: bool,
+    generate: bool,
+    render: bool,
     sink: str,
     local_sink_dir: Path,
     tmp_dir: Path,
@@ -81,6 +85,8 @@ def process(
         dry_run=dry_run,
         limit=limit,
         no_cache=no_cache,
+        generate=generate,
+        render=render,
         sink=sink,
         local_sink_dir=local_sink_dir,
         tmp_dir=tmp_dir,

@@ -96,15 +96,25 @@ def collect_figures(
     min_side_px: int = 50,
     max_repeat_pages: int = 5,
     include_vector: bool = True,
+    pages: set[int] | None = None,
     slug: str = "fig",
 ) -> list[Figure]:
-    """Extract, filter and rasterize figures across the whole document."""
+    """Extract, filter and rasterize figures.
+
+    `pages` (1-based) limits extraction to a subset of pages so `--limit` does
+    not pay to rasterize the whole book.
+    """
     images_dir.mkdir(parents=True, exist_ok=True)
     min_side_pt = min_side_px * 72.0 / dpi
+
+    def included(pno: int) -> bool:
+        return pages is None or (pno + 1) in pages
 
     # Pass 1: tally raster-image hashes to find repeated logos/watermarks.
     digest_pages: dict[str, set[int]] = {}
     for pno in range(doc.page_count):
+        if not included(pno):
+            continue
         for info in doc[pno].get_image_info(hashes=True):
             if info.get("digest"):
                 digest_pages.setdefault(info["digest"], set()).add(pno)
@@ -113,6 +123,8 @@ def collect_figures(
     counter = 0
 
     for pno in range(doc.page_count):
+        if not included(pno):
+            continue
         page = doc[pno]
         page_no = pno + 1
         regions: list[tuple[fitz.Rect, str, str | None]] = []
@@ -163,13 +175,15 @@ def collect_figures(
 
 
 def attach_figures_to_sections(sections, figures: list[Figure]) -> None:
-    """Assign each figure to the section whose page range contains it."""
+    """Assign each figure to the section whose page range contains it.
+
+    Figures outside every section's range are dropped rather than dumped into
+    the last section.
+    """
     for fig in figures:
-        owner = None
-        for sec in sections:
-            if sec.page <= fig.page:
-                owner = sec
-            else:
+        for i, sec in enumerate(sections):
+            start = sec.page
+            end = sections[i + 1].page - 1 if i + 1 < len(sections) else 10**9
+            if start <= fig.page <= end:
+                sec.figures.append(fig)
                 break
-        if owner is not None:
-            owner.figures.append(fig)

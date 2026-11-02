@@ -18,10 +18,13 @@ from .cache import ContentCache, hash_key
 from .chunker import HierarchicalChunker
 from .config import Config
 from .figures import attach_figures_to_sections, collect_figures
+from .generate import generate_chapters, write_artifacts
+from .llm.client import OllamaClient
 from .logging_setup import get_logger
 from .manifest import build_manifest
 from .models import ParsedDocument, Section
 from .parser import PyMuPDFParser
+from .render import render_pdf, render_pptx
 from .storage import LocalSink, R2StorageManager, sync_directory
 
 log = get_logger("pipeline")
@@ -75,13 +78,18 @@ def _parse(cfg: Config, doc: fitz.Document, pdf_path: Path, cache: ContentCache)
     return parsed
 
 
-def _limit_sections(sections: list[Section], n_chapters: int) -> list[Section]:
-    """Keep only the first `n_chapters` top-level sections (and their subsections)."""
+def _limit_sections(sections: list[Section], n_chapters: int) -> tuple[list[Section], int | None]:
+    """Keep only the first `n_chapters` top-level sections.
+
+    Returns the kept sections and the last page they cover (so figure extraction
+    can be limited to the same range).
+    """
     starts = [i for i, s in enumerate(sections) if s.level <= 1]
     if len(starts) <= n_chapters:
-        return sections
+        return sections, None
     end = starts[n_chapters]
-    return sections[:end]
+    last_page = sections[end].page - 1
+    return sections[:end], last_page
 
 
 def _backend(cfg: Config):
@@ -90,7 +98,17 @@ def _backend(cfg: Config):
     return LocalSink(cfg.local_sink_dir)
 
 
-def run(cfg: Config, pdf_path: str | Path, slug: str) -> dict:
+def _render_decks(book_tmp: Path, chapters) -> None:
+    slides_dir = book_tmp / "slides"
+    decks_dir = book_tmp / "decks"
+    decks_dir.mkdir(parents=True, exist_ok=True)
+    for ch in chapters:
+        md = slides_dir / f"chapter_{ch.index:02d}_slides.md"
+        render_pptx(md, decks_dir / f"chapter_{ch.index:02d}_slides.pptx")
+        render_pdf(md, decks_dir / f"chapter_{ch.index:02d}_slides.pdf")
+
+
+def run(cfg: Config, pdf_path: str | Path, slug: str, client=None) -> dict:
     pdf_path = Path(pdf_path)
     if not pdf_path.exists():
         raise FileNotFoundError(f"PDF not found: {pdf_path}")
@@ -105,9 +123,11 @@ def run(cfg: Config, pdf_path: str | Path, slug: str) -> dict:
     doc = fitz.open(pdf_path)
     try:
         parsed = _parse(cfg, doc, pdf_path, cache)
+        limit_page: int | None = None
         if cfg.limit:
-            parsed.sections = _limit_sections(parsed.sections, cfg.limit)
-        figures = collect_figures(doc, images_dir, dpi=cfg.dpi, slug="fig")
+            parsed.sections, limit_page = _limit_sections(parsed.sections, cfg.limit)
+        pages = set(range(1, limit_page + 1)) if limit_page else None
+        figures = collect_figures(doc, images_dir, dpi=cfg.dpi, slug="fig", pages=pages)
     finally:
         doc.close()
 
@@ -135,8 +155,16 @@ def run(cfg: Config, pdf_path: str | Path, slug: str) -> dict:
     }
 
     if cfg.dry_run:
-        log.info("dry-run: stopping before upload")
+        log.info("dry-run: stopping before generation/upload")
         return summary
+
+    if cfg.generate:
+        client = client or OllamaClient(cfg.ollama_host, cfg.model)
+        chapters = generate_chapters(client, cache, chunks)
+        write_artifacts(book_tmp, chapters)
+        summary["chapters_generated"] = len(chapters)
+        if cfg.render:
+            _render_decks(book_tmp, chapters)
 
     backend = _backend(cfg)
     prefix = f"books/{slug}"

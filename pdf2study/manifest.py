@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any
 
 from .chunker import Chunk
@@ -39,7 +40,9 @@ def _group_chapters(parsed: ParsedDocument, chunks: list[Chunk]) -> list[dict[st
             else:
                 break
         if owner:
-            by_chapter[owner]["figures"].append(fig.to_dict())
+            fig_dict = fig.to_dict()
+            fig_dict["image_path"] = f"images/{Path(fig.id).name}.png"
+            by_chapter[owner]["figures"].append(fig_dict)
 
     result: list[dict[str, Any]] = []
     for ch_title in order:

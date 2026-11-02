@@ -10,9 +10,17 @@ See [`PLAN.MD`](../PLAN.MD) for the full architecture.
 | Milestone | State |
 |---|---|
 | M1 — deterministic core (parse, figures, chunk, manifest, cache, CLI `--dry-run`) | ✅ done |
-| M2 — Ollama generation, map/reduce, Marp render, validation | ⏳ next |
+| M2 — Ollama generation, map/reduce, Marp PDF + python-pptx render, validation | 🔬 implemented, validating on a real book |
 | M3 — live R2 upload + manifest | ⏳ |
 | M4 — OCR fallback, VLM captions, Docling backend | ⏳ |
+
+### Generation model
+
+Slides are requested as Marp Markdown. Q&A is **not** requested as MkDocs markdown:
+the model returns a simple delimited form (`Q:` / `A)`–`D)` / `ANSWER:` / `WHY:`)
+and `pdf2study` renders the `??? tip` callouts itself. This keeps small models from
+corrupting the final format. Thinking is disabled (`think: false`) and any reasoning
+traces are stripped as a fallback.
 
 ## Install
 
@@ -47,6 +55,8 @@ uv run pdf2study process books/mybook.pdf --book-slug mybook --sink r2
 | `--dry-run` | stop before generation/upload |
 | `--limit N` | only the first N chapters |
 | `--sink local\|r2` | destination backend |
+| `--generate/--no-generate` | run LLM generation (default on) |
+| `--render/--no-render` | render PPTX/PDF decks (default on) |
 | `--keep-temp` / `--no-cache` | debugging |
 
 ## R2 layout

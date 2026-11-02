@@ -7,6 +7,8 @@ def _cfg(tmp_path, **kw):
         tmp_dir=tmp_path / "tmp",
         cache_dir=tmp_path / ".cache",
         local_sink_dir=tmp_path / "sink",
+        generate=False,
+        render=False,
         **kw,
     )
 
