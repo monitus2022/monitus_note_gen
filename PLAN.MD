@@ -50,7 +50,7 @@
 ## 2. Technical Stack Specifications
 
 * **Language & Runtime:** Python 3.11+
-* **LLM Engine:** Local Ollama instance (defaulting to `qwen2.5:14b` or `qwen2.5-coder:7b`/`14b` via `http://localhost:11434/api/generate`)
+* **LLM Engine:** Local Ollama instance (defaulting to `qwen3.5` with `4b` or `9b` params depends on needs)
 * **PDF Parser:** `pymupdf` and `pymupdf4llm`
 * **Slide Generator:** `Marp CLI` (`@marp-team/marp-cli` executed via Python `subprocess`)
 * **Output Artifacts:**
@@ -225,7 +225,7 @@ Create a `MarpRenderer` module:
 Create a CLI interface using `click`:
 
 ```bash
-python main.py process path/to/book.pdf --model qwen2.5:14b --output-dir ./output
+python main.py process path/to/book.pdf --model qwen3.5:4b --output-dir ./output
 
 ```
 
