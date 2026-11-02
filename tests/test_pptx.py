@@ -1,4 +1,5 @@
 from pptx import Presentation
+from pptx.enum.shapes import MSO_SHAPE_TYPE
 
 from pdf2study.render.pptx import render_pptx
 
@@ -27,3 +28,28 @@ def test_render_pptx_builds_slides(tmp_path):
 
     prs = Presentation(str(out))
     assert len(prs.slides._sldIdLst) == 2
+
+
+def test_render_pptx_fits_image_only_slide(tmp_path):
+    from PIL import Image
+
+    img = tmp_path / "images"
+    img.mkdir()
+    Image.new("RGB", (2000, 500), (10, 20, 30)).save(img / "wide.png")
+
+    md = tmp_path / "slides" / "img.md"
+    md.parent.mkdir()
+    md.write_text("![bg fit](../images/wide.png)\n", encoding="utf-8")
+
+    out = tmp_path / "out.pptx"
+    assert render_pptx(md, out) is True
+
+    prs = Presentation(str(out))
+    slides = list(prs.slides)
+    assert len(slides) == 1
+    pics = [sh for sh in slides[0].shapes if sh.shape_type == MSO_SHAPE_TYPE.PICTURE]
+    assert len(pics) == 1
+    pic = pics[0]
+    # fits within the slide and preserves the 4:1 aspect ratio
+    assert pic.width <= prs.slide_width and pic.height <= prs.slide_height
+    assert abs((pic.width / pic.height) - 4.0) < 0.05

@@ -1,5 +1,6 @@
 from pdf2study.validate import (
     dedupe_items,
+    isolate_images,
     normalize_slides,
     parse_qna_raw,
     render_qna,
@@ -27,6 +28,19 @@ def test_split_and_normalize_deck():
 
 def test_validate_deck_flags_missing_heading():
     assert validate_deck("just text no heading") != []
+
+
+def test_isolate_images_own_slide_and_dedupe():
+    md = "# T\n\n---\n\n## A\n- one\n![f](../images/f.png)\n\n---\n\n## B\n- two\n![f](../images/f.png)\n"
+    out = isolate_images(md)
+    blocks = split_slides(out)
+    # no slide mixes bullets and an image
+    assert not any("![" in b and "- one" in b for b in blocks)
+    # the repeated image appears once, as an auto-fitting background slide
+    assert sum(b.strip() == "![bg fit](../images/f.png)" for b in blocks) == 1
+    assert "## A" in out and "## B" in out
+    # image slides are allowed by the validator
+    assert validate_deck(out) == []
 
 
 RAW_QNA = """Q: What is X?

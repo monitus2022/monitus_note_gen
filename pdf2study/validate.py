@@ -81,6 +81,36 @@ def normalize_slides(markdown: str) -> str:
     return "\n\n---\n\n".join(blocks) + ("\n" if blocks else "")
 
 
+def isolate_images(markdown: str) -> str:
+    """Move every image onto its own slide as an auto-fitting background.
+
+    Inline images overflow and get clipped under bullets; a dedicated
+    `![bg fit]` slide scales to fit regardless of the source image size.
+    Duplicate images across the deck are emitted only once.
+    """
+    blocks = split_slides(markdown)
+    out: list[str] = []
+    seen: set[str] = set()
+    for block in blocks:
+        images: list[str] = []
+        kept_lines: list[str] = []
+        for line in block.splitlines():
+            m = _IMAGE_RE.search(line)
+            if m and line.strip().startswith("!["):
+                images.append(m.group(2))
+                continue
+            kept_lines.append(line)
+        kept = re.sub(r"\n{3,}", "\n\n", _IMAGE_RE.sub("", "\n".join(kept_lines))).strip()
+        if kept:
+            out.append(kept)
+        for path in images:
+            if path in seen:
+                continue
+            seen.add(path)
+            out.append(f"![bg fit]({path})")
+    return "\n\n---\n\n".join(out) + ("\n" if out else "")
+
+
 def validate_deck(markdown: str) -> list[str]:
     issues: list[str] = []
     blocks = split_slides(markdown)
@@ -88,7 +118,7 @@ def validate_deck(markdown: str) -> list[str]:
         return ["deck is empty"]
     for i, block in enumerate(blocks, 1):
         slide = parse_slide(block)
-        if not slide.title:
+        if not slide.title and not slide.images:
             issues.append(f"slide {i}: missing heading")
         if len(slide.bullets) > 6:
             issues.append(f"slide {i}: too many bullets ({len(slide.bullets)})")

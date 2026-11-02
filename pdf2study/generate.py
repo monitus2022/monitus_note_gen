@@ -12,7 +12,7 @@ from .llm.client import OllamaClient
 from .logging_setup import get_logger
 from .models import Figure
 from .prompts import PROMPT_VERSION, qna_fragment_prompt, slide_fragment_prompt
-from .validate import dedupe_items, normalize_slides, parse_qna_raw, render_qna, strip_wrappers
+from .validate import dedupe_items, isolate_images, normalize_slides, parse_qna_raw, render_qna, strip_wrappers
 
 log = get_logger("generate")
 
@@ -84,7 +84,7 @@ def generate_chapters(
         for chunk, _, raw in entries:
             qna_items.extend(parse_qna_raw(raw))
             log.info("generated %s (chapter %d)", chunk.chunk_id, index)
-        slides_md = f"# {title}\n\n---\n\n" + "\n\n---\n\n".join(slide_parts) + "\n"
+        slides_md = isolate_images(f"# {title}\n\n---\n\n" + "\n\n---\n\n".join(slide_parts)) + "\n"
         qna_md = render_qna(dedupe_items(qna_items))
         out.append(ChapterArtifacts(index, title, slides_md, qna_md))
     return out
