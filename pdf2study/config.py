@@ -54,6 +54,7 @@ class Config:
     generate: bool = True
     render: bool = True
     fulltext: bool = True
+    epub: bool = True
 
     # destination
     sink: str = "local"  # local | r2

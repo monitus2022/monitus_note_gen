@@ -9,6 +9,7 @@ from pathlib import Path
 import click
 
 from .config import load_config
+from .epubbuild import build_book_epub
 from .logging_setup import setup_logging
 from .pipeline import run
 from .publish import publish as publish_notes
@@ -52,6 +53,7 @@ def main() -> None:
 @click.option("--generate/--no-generate", default=True, help="Run LLM generation (default on)")
 @click.option("--render/--no-render", default=True, help="Render PPTX/PDF decks")
 @click.option("--fulltext/--no-fulltext", default=True, help="Write a full-text .txt artifact per book")
+@click.option("--epub/--no-epub", default=True, help="Write a single .epub per book (headings + images)")
 @click.option("--sink", type=click.Choice(["local", "r2"]), default="local", show_default=True)
 @click.option("--local-sink-dir", type=click.Path(path_type=Path), default=Path("tmp_local_sink"), show_default=True)
 @click.option("--tmp-dir", type=click.Path(path_type=Path), default=Path("tmp_build"), show_default=True)
@@ -76,6 +78,7 @@ def process(
     generate: bool,
     render: bool,
     fulltext: bool,
+    epub: bool,
     sink: str,
     local_sink_dir: Path,
     tmp_dir: Path,
@@ -102,6 +105,7 @@ def process(
         generate=generate,
         render=render,
         fulltext=fulltext,
+        epub=epub,
         sink=sink,
         local_sink_dir=local_sink_dir,
         tmp_dir=tmp_dir,
@@ -150,3 +154,34 @@ def publish(
         github_token=os.getenv("GITHUB_TOKEN"),
     )
     click.echo(json.dumps(result, indent=2))
+
+
+@main.command()
+@click.option("--book-slug", required=True)
+@click.option("--source", type=click.Choice(["auto", "local", "r2"]), default="r2", show_default=True)
+@click.option("--out", type=click.Path(path_type=Path), default=None, help="Local output path")
+@click.option("--title", default=None, help="Override the book title")
+@click.option("--sink", type=click.Choice(["local", "r2"]), default="local", show_default=True)
+@click.option("--tmp-dir", type=click.Path(path_type=Path), default=Path("tmp_build"), show_default=True)
+@click.option("--verbose", is_flag=True, default=False)
+def epub(
+    book_slug: str,
+    source: str,
+    out: Path | None,
+    title: str | None,
+    sink: str,
+    tmp_dir: Path,
+    verbose: bool,
+) -> None:
+    """Rebuild the per-book EPUB from existing artifacts (R2 or local)."""
+    setup_logging(verbose)
+    cfg = load_config(tmp_dir=tmp_dir)
+    path = build_book_epub(cfg, book_slug, source=source, out_path=out, title=title)
+    if sink == "r2":
+        from .storage import R2StorageManager
+
+        key = f"books/{book_slug}/{book_slug}.epub"
+        R2StorageManager(cfg.r2).put_file(path, key)
+        click.echo(json.dumps({"r2": key}))
+    else:
+        click.echo(json.dumps({"epub": str(path)}))

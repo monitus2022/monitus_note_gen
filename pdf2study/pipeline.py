@@ -25,7 +25,7 @@ from .manifest import build_manifest
 from .models import ParsedDocument, Section
 from .ocr import maybe_ocr
 from .parser import PyMuPDFParser
-from .render import render_pdf, render_pptx
+from .render import render_epub, render_pdf, render_pptx
 from .storage import LocalSink, R2StorageManager, sync_directory
 from .validate import markdown_to_text
 
@@ -180,6 +180,15 @@ def run(cfg: Config, pdf_path: str | Path, slug: str, client=None) -> dict:
         summary["chapters_generated"] = len(chapters)
         if cfg.render:
             _render_decks(book_tmp, chapters)
+        if cfg.epub:
+            render_epub(
+                chapters,
+                images_dir,
+                book_tmp / f"{slug}.epub",
+                title=parsed.title or slug,
+                slug=slug,
+            )
+            summary["epub"] = f"{slug}.epub"
 
     backend = _backend(cfg)
     prefix = f"books/{slug}"

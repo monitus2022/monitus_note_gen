@@ -134,6 +134,8 @@ on OpenRouter depending on model. Both providers implement the same client inter
 | `--sink local\|r2` | destination backend |
 | `--generate/--no-generate` | run LLM generation (default on) |
 | `--render/--no-render` | render PPTX/PDF decks (default on) |
+| `--fulltext/--no-fulltext` | write `fulltext.txt` per book (default on) |
+| `--epub/--no-epub` | write a single `.epub` per book (default on) |
 | `--keep-temp` / `--no-cache` | debugging |
 
 ## R2 layout
@@ -141,9 +143,23 @@ on OpenRouter depending on model. Both providers implement the same client inter
 ```text
 books/<slug>/
 ├── manifest.json
+├── fulltext.txt                 # whole book as plain text
+├── <slug>.epub                  # single e-reader file (headings + images + Q&A)
 ├── chunks/chunk_0001.json
+├── slides/chapter_01_slides.md
+├── qna/chapter_01_qna.md
+├── decks/chapter_01_slides.pdf  # + .pptx
 └── images/fig_001_0001.png
-# slides/, qna/, decks/ are produced in M2+
+```
+
+### EPUB
+
+A single `.epub` per book, retaining headings and embedding figures, with the
+Q&A turned into readable text (no MkDocs callout syntax). Built during
+`process` (disable with `--no-epub`) and rebuildable on its own:
+
+```bash
+uv run pdf2study epub --book-slug ai-engineering --source r2 --sink r2 --title "AI Engineering"
 ```
 
 ## Tests
