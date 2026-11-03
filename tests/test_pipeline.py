@@ -21,6 +21,8 @@ def test_dry_run_writes_artifacts(sample_pdf, tmp_path):
     assert summary["chapters"] >= 1
     assert summary["figures"] >= 1
     assert (book / "manifest.json").exists()
+    assert (book / "fulltext.txt").exists()
+    assert summary["fulltext_chars"] > 0
     assert list((book / "chunks").glob("chunk_*.json"))
     assert list((book / "images").glob("*.png"))
 

@@ -111,6 +111,25 @@ def isolate_images(markdown: str) -> str:
     return "\n\n---\n\n".join(out) + ("\n" if out else "")
 
 
+def markdown_to_text(markdown: str) -> str:
+    """Collapse Markdown to readable plain text (for the fulltext artifact)."""
+    text = strip_wrappers(markdown)
+    text = re.sub(r"```.*?```", "", text, flags=re.DOTALL)
+    text = _IMAGE_RE.sub(lambda m: m.group(1), text)  # keep alt text
+    text = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", text)  # links -> label
+    text = re.sub(r"^\s{0,3}#{1,6}\s*", "", text, flags=re.MULTILINE)  # headings
+    text = re.sub(r"^\s{0,3}[-*+]\s+", "- ", text, flags=re.MULTILINE)  # bullets
+    text = re.sub(r"^\s*>\s?", "", text, flags=re.MULTILINE)  # blockquotes
+    text = text.replace("**", "").replace("__", "").replace("`", "").replace("~~", "")
+    text = re.sub(r"(?<!\*)\*(?!\*)", "", text)  # stray italic asterisks
+    text = re.sub(r"<[a-zA-Z/][^>]*>", "", text)  # inline HTML tags (e.g. <u>)
+    text = re.sub(r"^\s*\|?[\s:|-]+\|?\s*$", "", text, flags=re.MULTILINE)  # table rules
+    text = text.replace("|", " ")
+    text = re.sub(r"[ \t]+", " ", text)
+    text = re.sub(r"\n{3,}", "\n\n", text)
+    return text.strip()
+
+
 def validate_deck(markdown: str) -> list[str]:
     issues: list[str] = []
     blocks = split_slides(markdown)

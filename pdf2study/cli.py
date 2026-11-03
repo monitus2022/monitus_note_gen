@@ -51,6 +51,7 @@ def main() -> None:
 @click.option("--no-cache", is_flag=True, default=False, help="Disable the content-hash cache")
 @click.option("--generate/--no-generate", default=True, help="Run LLM generation (default on)")
 @click.option("--render/--no-render", default=True, help="Render PPTX/PDF decks")
+@click.option("--fulltext/--no-fulltext", default=True, help="Write a full-text .txt artifact per book")
 @click.option("--sink", type=click.Choice(["local", "r2"]), default="local", show_default=True)
 @click.option("--local-sink-dir", type=click.Path(path_type=Path), default=Path("tmp_local_sink"), show_default=True)
 @click.option("--tmp-dir", type=click.Path(path_type=Path), default=Path("tmp_build"), show_default=True)
@@ -74,6 +75,7 @@ def process(
     no_cache: bool,
     generate: bool,
     render: bool,
+    fulltext: bool,
     sink: str,
     local_sink_dir: Path,
     tmp_dir: Path,
@@ -99,6 +101,7 @@ def process(
         no_cache=no_cache,
         generate=generate,
         render=render,
+        fulltext=fulltext,
         sink=sink,
         local_sink_dir=local_sink_dir,
         tmp_dir=tmp_dir,

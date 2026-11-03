@@ -53,6 +53,7 @@ class Config:
     no_cache: bool = False
     generate: bool = True
     render: bool = True
+    fulltext: bool = True
 
     # destination
     sink: str = "local"  # local | r2

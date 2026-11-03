@@ -1,6 +1,7 @@
 from pdf2study.validate import (
     dedupe_items,
     isolate_images,
+    markdown_to_text,
     normalize_slides,
     parse_qna_raw,
     render_qna,
@@ -28,6 +29,14 @@ def test_split_and_normalize_deck():
 
 def test_validate_deck_flags_missing_heading():
     assert validate_deck("just text no heading") != []
+
+
+def test_markdown_to_text_strips_syntax():
+    md = "# Title\n\n**bold** and <u>under</u>\n\n- item\n- two\n\n| a | b |\n| - | - |\n| 1 | 2 |\n\n![cap](img.png) [link](x)"
+    txt = markdown_to_text(md)
+    for token in ["#", "**", "|", "](", "![", "<u>", "</u>"]:
+        assert token not in txt
+    assert "Title" in txt and "bold" in txt and "under" in txt and "item" in txt and "cap" in txt and "link" in txt
 
 
 def test_isolate_images_own_slide_and_dedupe():

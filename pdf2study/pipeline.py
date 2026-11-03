@@ -27,6 +27,7 @@ from .ocr import maybe_ocr
 from .parser import PyMuPDFParser
 from .render import render_pdf, render_pptx
 from .storage import LocalSink, R2StorageManager, sync_directory
+from .validate import markdown_to_text
 
 log = get_logger("pipeline")
 
@@ -121,7 +122,7 @@ def run(cfg: Config, pdf_path: str | Path, slug: str, client=None) -> dict:
 
     cache = ContentCache(Path(cfg.cache_dir) / slug, enabled=not cfg.no_cache)
 
-    effective_pdf = maybe_ocr(cfg, pdf_path, book_tmp)
+    effective_pdf = maybe_ocr(cfg, pdf_path, slug)
     doc = fitz.open(effective_pdf)
     try:
         parsed = _parse(cfg, doc, effective_pdf, cache)
@@ -150,12 +151,20 @@ def run(cfg: Config, pdf_path: str | Path, slug: str, client=None) -> dict:
         json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8"
     )
 
+    fulltext_chars = 0
+    if cfg.fulltext:
+        fulltext = markdown_to_text("\n\n".join(s.markdown for s in parsed.sections))
+        (book_tmp / "fulltext.txt").write_text(fulltext, encoding="utf-8")
+        fulltext_chars = len(fulltext)
+        log.info("wrote fulltext.txt (%d chars)", fulltext_chars)
+
     summary = {
         "slug": slug,
         "sections": len(parsed.sections),
         "chapters": len(manifest["chapters"]),
         "chunks": len(chunks),
         "figures": len(figures),
+        "fulltext_chars": fulltext_chars,
         "tmp_dir": str(book_tmp),
         "dry_run": cfg.dry_run,
     }

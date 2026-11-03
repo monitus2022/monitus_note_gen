@@ -45,11 +45,16 @@ def run_ocr(src: str | Path, dst: str | Path, *, timeout: int = 1800) -> bool:
         return True
     except Exception as exc:  # noqa: BLE001 - any failure means "keep original"
         log.warning("ocrmypdf failed (%s); using original PDF", exc)
+        dst.unlink(missing_ok=True)  # never leave a partial file to be reused later
         return False
 
 
-def maybe_ocr(cfg: Config, pdf_path: str | Path, workdir: str | Path) -> Path:
-    """Return the PDF to parse, running OCR first if needed and enabled."""
+def maybe_ocr(cfg: Config, pdf_path: str | Path, slug: str) -> Path:
+    """Return the PDF to parse, running OCR first if needed and enabled.
+
+    The OCR output is cached under the cache dir (never inside the book's build
+    dir), so it is reused across runs and never uploaded as a book artifact.
+    """
     pdf_path = Path(pdf_path)
     if cfg.ocr == "never":
         return pdf_path
@@ -69,7 +74,10 @@ def maybe_ocr(cfg: Config, pdf_path: str | Path, workdir: str | Path) -> Path:
         log.warning("OCR needed but 'ocrmypdf' is not installed; proceeding without OCR")
         return pdf_path
 
-    out = Path(workdir) / f"{pdf_path.stem}.ocr.pdf"
+    out = Path(cfg.cache_dir) / slug / "ocr" / f"{pdf_path.stem}.ocr.pdf"
+    if out.exists():
+        log.info("using cached OCR output: %s", out)
+        return out
     if run_ocr(pdf_path, out):
         log.info("wrote OCR text layer: %s", out)
         return out
