@@ -154,9 +154,10 @@ books/<slug>/
 
 ### EPUB
 
-A single `.epub` per book, retaining headings and embedding figures, with the
-Q&A turned into readable text (no MkDocs callout syntax). Built during
-`process` (disable with `--no-epub`) and rebuildable on its own:
+A single `.epub` per book for e-readers: chapter/section **headings preserved**,
+**figures embedded**, a nested table of contents plus a visible Contents page.
+Q&A is **not** included. Built during `process` (disable with `--no-epub`) and
+rebuildable on its own:
 
 ```bash
 uv run pdf2study epub --book-slug ai-engineering --source r2 --sink r2 --title "AI Engineering"

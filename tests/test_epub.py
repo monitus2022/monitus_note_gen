@@ -39,10 +39,11 @@ def test_render_epub_structure(tmp_path):
         assert any(n.endswith("chapter_01.xhtml") for n in names)
         assert any(n.endswith("images/f1.png") for n in names)
 
-    # Q&A is converted to readable text (no MkDocs callout syntax)
+    # Q&A is intentionally excluded from the EPUB
     with zipfile.ZipFile(out) as z:
         ch1 = z.read([n for n in z.namelist() if n.endswith("chapter_01.xhtml")][0]).decode()
-    assert "???" not in ch1 and "[ ]" not in ch1
-    assert "Correct Answer" in ch1
-    assert "Practice Questions" in ch1
+    assert "Practice Questions" not in ch1
+    assert "Correct Answer" not in ch1
     assert 'src="images/f1.png"' in ch1
+    # a Contents page is included
+    assert any(n.endswith("contents.xhtml") for n in zipfile.ZipFile(out).namelist())

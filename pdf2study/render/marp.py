@@ -43,6 +43,7 @@ def render_pdf(md_path: str | Path, out_path: str | Path, *, timeout: int = 600)
         str(out_path),
         "--allow-local-files",
         "--no-stdin",
+        "--pdf-outlines",  # clickable chapter/section bookmarks
     ]
     try:
         subprocess.run(cmd, check=True, capture_output=True, timeout=timeout)
